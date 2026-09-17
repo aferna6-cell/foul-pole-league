@@ -98,6 +98,7 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
 .play-frame { position: fixed; inset: 52px 0 0 0; border: 0; width: 100%; height: calc(100% - 52px); background: #000; }
 .play-top { position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 20; display: flex; align-items: center; gap: 12px;
   padding: 0 12px; background: rgba(14,33,53,.94); border-bottom: 2px solid var(--pole); }
+.play-top .pill { flex: none; margin: 0; white-space: nowrap; }
 .play-top .ticker { margin: 0; padding: 0; border: 0; background: none; font-size: 16px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .modal-scrim { position: fixed; inset: 0; z-index: 40; background: radial-gradient(120% 90% at 50% 0%, rgba(7,16,27,.55), rgba(7,16,27,.93));
   display: flex; align-items: center; justify-content: center; padding: 20px; }

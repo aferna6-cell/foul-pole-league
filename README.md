@@ -53,3 +53,20 @@ This migration is already applied to project `cchcuhksccbeccendewt`. A fresh pro
 - Dual-count: one swing may credit a live clan meet **and** a live town-vs-town meet. Town credit only exists inside an active town-vs-town meet.
 - Sanctioned meets use `park_seed = neutral-v1`.
 - Physics in the HTML prototype is unchanged (`k = 0.00116`).
+- **Neutral park is forced in the play iframe.** `create_meet` still writes `park_seed = neutral-v1`. `/play` reads the live meet from `scoreboard_payload` (same row as the ticker) and loads `/foul-pole-league.html?park_seed=…`, then `postMessage`s `set_park` so the game rebuilds that seed before a swing. Club zip parks cannot replace it while the meet is live. `post_swing` credits a meet only when the reported `p_park_seed` already matches `meet.park_seed` — it no longer relabels zip-porch feet after the fact.
+
+## QA: meet park
+
+1. Create (or use) a **live** meet. Confirm `meets.park_seed` is `neutral-v1`.
+2. Open `/play`. The chrome pill should read `park neutral-v1`. The iframe `src` includes `?park_seed=neutral-v1`. In the game top bar, Ballpark is **Neutral Park** (not the zip field).
+3. Swing. The posted row’s `park_seed` is `neutral-v1`, and fence/feet used that seed’s geometry (`makePark('neutral-v1')`), not the player zip.
+4. In club setup, change zip during the live meet — park stays Neutral Park.
+5. After the meet is `final`, `/play` drops the query param and zip parks work again.
+
+Apply `supabase/migrations/20260917190000_meet_park_seed_guard.sql` so zip-park postMessages cannot count for the meet. The iframe force is the physics fix even before that SQL is applied.
+
+```bash
+node scripts/verify-meet-park.mjs
+```
+
+That checks `k` is still `0.00116`, `/play` passes `park_seed` into the iframe, and zip fence geometry differs from `neutral-v1`.
