@@ -199,7 +199,7 @@ export default function HomePage() {
           <div className="k">Ticker</div>
           <div className="v sm">{liveTicker}</div>
         </div>
-        <div className="cell">
+        <div className="cell toprail-swing">
           <Link className="btn primary" href="/play">
             Take a swing
           </Link>
@@ -356,6 +356,12 @@ export default function HomePage() {
           {msg ? <p className="ok">{msg}</p> : null}
         </section>
       </main>
+      <div className="swing-dock">
+        <Link className="btn primary" href="/play">
+          Take a swing
+        </Link>
+        <span className="hint">Tap when the bar hits gold. First swing is free — no login.</span>
+      </div>
     </>
   );
 }

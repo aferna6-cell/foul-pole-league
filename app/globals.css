@@ -14,6 +14,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--chalk);
   font-family: Archivo, system-ui, sans-serif; }
+html { background: var(--bg); }
 a { color: var(--pole); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
@@ -24,9 +25,14 @@ a:hover { text-decoration: underline; }
   display: flex; align-items: stretch; gap: 0;
   background: linear-gradient(180deg, rgba(14,33,53,.96), rgba(14,33,53,.78));
   border-bottom: 2px solid var(--pole);
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
-.toprail .cell { padding: 8px 14px; border-right: 1px solid var(--line); }
+.toprail .cell { padding: 8px 14px; border-right: 1px solid var(--line); min-width: 0; }
 .toprail .cell:last-child { margin-left: auto; border-right: 0; border-left: 1px solid var(--line); }
+.toprail .v.sm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.swing-dock { display: none; }
 .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
 .v { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 20px; line-height: 1.05; }
 .v.sm { font-size: 15px; font-weight: 700; }
@@ -95,13 +101,27 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
 .err { color: #ffb4a8; font-size: 13px; margin-top: 8px; }
 .ok { color: var(--pole); font-size: 13px; margin-top: 8px; }
 
-.play-frame { position: fixed; inset: 52px 0 0 0; border: 0; width: 100%; height: calc(100% - 52px); background: #000; }
-.play-top { position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 20; display: flex; align-items: center; gap: 12px;
-  padding: 0 12px; background: rgba(14,33,53,.94); border-bottom: 2px solid var(--pole); }
+.play-frame {
+  position: fixed;
+  top: calc(52px + env(safe-area-inset-top));
+  right: 0;
+  bottom: env(safe-area-inset-bottom);
+  left: 0;
+  border: 0;
+  width: 100%;
+  /* iframe is replaced: height:auto + inset will not stretch it */
+  height: calc(100dvh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  background: #000;
+}
+.play-top { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
+  height: calc(52px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  background: rgba(14,33,53,.94); border-bottom: 2px solid var(--pole); }
 .play-top .pill { flex: none; margin: 0; white-space: nowrap; }
 .play-top .ticker { margin: 0; padding: 0; border: 0; background: none; font-size: 16px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .modal-scrim { position: fixed; inset: 0; z-index: 40; background: radial-gradient(120% 90% at 50% 0%, rgba(7,16,27,.55), rgba(7,16,27,.93));
-  display: flex; align-items: center; justify-content: center; padding: 20px; }
+  display: flex; align-items: center; justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 .modal { width: 100%; max-width: 420px; background: linear-gradient(180deg, #123049, #0c2137);
   border: 1px solid var(--line); border-top: 3px solid var(--pole); border-radius: 3px; padding: 22px; }
 
@@ -111,4 +131,21 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
 @media (max-width: 640px) {
   .slots { grid-template-columns: repeat(9, minmax(0, 1fr)); }
   .slot { font-size: 10px; height: 30px; }
+  /* Yellow Take a swing was clipped off the right of the top rail on iPhone. */
+  .toprail-swing { display: none; }
+  .shell { padding-bottom: 132px; }
+  .swing-dock {
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: linear-gradient(180deg, rgba(7,16,27,0), rgba(7,16,27,.97) 28%);
+    padding: 16px max(16px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .swing-dock .btn {
+    display: block; width: 100%; text-align: center;
+    font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 28px;
+    letter-spacing: 0.04em; padding: 18px 16px;
+  }
+  .swing-dock .hint {
+    display: block; text-align: center; color: var(--dim); font-size: 13px; margin-top: 8px; line-height: 1.4;
+  }
+  .swing-dock .btn:hover { text-decoration: none; }
 }

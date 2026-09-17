@@ -5,7 +5,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "verify:meet-park": "node scripts/verify-meet-park.mjs"
+    "verify:meet-park": "node scripts/verify-meet-park.mjs",
+    "verify:slice2": "node scripts/verify-slice2.mjs",
+    "verify": "node scripts/verify-meet-park.mjs && node scripts/verify-slice2.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
