@@ -48,7 +48,8 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:0}
 
 /* ---------- overlays ---------- */
 .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  background:radial-gradient(120% 90% at 50% 0%,rgba(7,16,27,.55),rgba(7,16,27,.93));padding:20px;overflow-y:auto}
+  background:radial-gradient(120% 90% at 50% 0%,rgba(7,16,27,.55),rgba(7,16,27,.93));overflow-y:auto;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 .screen.on{display:flex}
 .panel{width:100%;max-width:520px;background:linear-gradient(180deg,#123049,#0C2137);
   border:1px solid var(--line);border-top:3px solid var(--pole);border-radius:3px;
@@ -90,7 +91,7 @@ input:focus{outline:none;border-color:var(--pole)}
 .sw[aria-pressed=true]{border-color:var(--chalk);box-shadow:0 0 0 2px rgba(0,0,0,.5) inset}
 
 /* ---------- swing controls ---------- */
-#hud{margin-top:auto;padding:0 12px 14px;display:none}
+#hud{margin-top:auto;padding:0 12px calc(18px + env(safe-area-inset-bottom));display:none}
 #hud.on{display:block}
 #pitchline{text-align:center;font-family:"Barlow Condensed";font-weight:700;font-size:15px;
   color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;text-shadow:0 2px 6px #000}
@@ -98,13 +99,14 @@ input:focus{outline:none;border-color:var(--pole)}
 #meter{height:34px;position:relative;border:2px solid rgba(247,242,229,.5);border-radius:2px;overflow:hidden;
   background:#0A1826;box-shadow:0 6px 24px rgba(0,0,0,.6)}
 #meter .zone{position:absolute;top:0;bottom:0}
+/* CONTACT.solid 0.40 / good 0.16 / barrel 0.06 — JS syncMeterZones() overwrites from the same numbers */
 #zFair{left:30%;right:30%;background:rgba(28,85,64,.55)}
-#zGood{left:39%;right:39%;background:rgba(40,130,88,.75)}
-#zBarrel{left:45.5%;right:45.5%;background:var(--pole)}
+#zGood{left:42%;right:42%;background:rgba(40,130,88,.75)}
+#zBarrel{left:47%;right:47%;background:var(--pole)}
 #needle{position:absolute;top:-4px;bottom:-4px;width:4px;background:var(--chalk);
   box-shadow:0 0 12px rgba(247,242,229,.9);transform:translateX(-2px);border-radius:2px}
-#swingbtn{margin:11px auto 0;max-width:560px;font-family:"Barlow Condensed";font-weight:800;font-size:27px;
-  letter-spacing:.06em;text-align:center;padding:14px;background:var(--pole);color:#16202B;border:none}
+#swingbtn{margin:12px auto 0;max-width:560px;width:100%;font-family:"Barlow Condensed";font-weight:800;font-size:32px;
+  letter-spacing:.06em;text-align:center;padding:18px 16px;min-height:64px;background:var(--pole);color:#16202B;border:none}
 #swingbtn:disabled{opacity:.35}
 
 /* live call-out */
@@ -161,11 +163,20 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pole)}
 .pill{display:inline-block;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
   padding:3px 7px;border:1px solid var(--pole);color:var(--pole);border-radius:2px;margin-bottom:12px}
 .trophy{font-family:"Barlow Condensed";font-weight:800;font-size:clamp(34px,9vw,58px);line-height:.9;color:var(--pole);margin:6px 0 2px;text-transform:uppercase}
-#toast{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);background:rgba(11,26,42,.95);
+#toast{position:absolute;left:50%;bottom:calc(118px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(11,26,42,.95);
   border:1px solid var(--pole);padding:9px 15px;border-radius:2px;font-size:13px;font-weight:600;
   opacity:0;transition:opacity .25s;white-space:nowrap}
 #toast.on{opacity:1}
-@media (max-width:560px){#matchcard{width:150px;top:58px;right:8px}}
+@media (max-width:560px){
+  #matchcard{width:150px;top:58px;right:8px}
+  #swingbtn{font-size:34px;padding:20px 16px;min-height:68px;max-width:none}
+}
+@media (max-height:700px){
+  h1.title{font-size:clamp(36px,10vw,64px)}
+  .tagline{font-size:13px;margin-top:8px}
+  .menu{margin-top:14px}
+  .panel{padding:16px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -212,7 +223,7 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pole)}
       <h1 class="title">Foul Pole<em>League</em></h1>
       <p class="tagline">A home run derby played on your town's field. Swing solo, build a club, or run the bracket all the way to the national final.</p>
       <div class="menu">
-        <button class="primary" id="goQuick"><span class="lbl">Take a swing<span class="desc" style="color:#3A4654">No setup. Just hit one.</span></span><span class="arrow" style="color:#16202B">▸</span></button>
+        <button class="primary" id="goQuick"><span class="lbl">Take a swing<span class="desc" style="color:#3A4654">Tap when the bar hits gold. First one is free.</span></span><span class="arrow" style="color:#16202B">▸</span></button>
         <button id="goSetup"><span class="lbl">Set up my club<span class="desc">Name, colors, and your home park by zip.</span></span><span class="arrow">▸</span></button>
       </div>
     </div>
@@ -1086,14 +1097,27 @@ function show(id){['scSplash','scSetup','scHub','scBracket','scResult','scBook']
 }
 
 /* ---------- swing mechanics ---------- */
+/* Slice 2: tighter gold/good windows. k and flight() untouched.
+   off = |t − 0.5| × 2. CSS #zBarrel/#zGood/#zFair must match (syncMeterZones).
+   before: barrel 0.09 / good 0.22 / solid 0.40 / fair 0.62
+   after:  barrel 0.06 / good 0.16 / solid 0.40 / fair 0.62   (Lead may lock later) */
+const CONTACT={barrel:.06,good:.16,solid:.40,fair:.62};
+function meterInset(off){return ((1-off)/2*100)+'%'}
+function syncMeterZones(){
+  const pairs=[['zBarrel','barrel'],['zGood','good'],['zFair','solid']];
+  for(const [id,key] of pairs){
+    const el=$(id); if(!el) continue;
+    el.style.left=el.style.right=meterInset(CONTACT[key]);
+  }
+}
 function qualityFrom(t){                       // t = 0..1 needle position
   const off=Math.abs(t-.5)*2;                  // 0 dead center, 1 edge
   const side=t<.5?-1:1;
   let mph,la,spray,tag,q;
-  if(off<.09){ q=1.00; mph=105+Math.random()*5; la=26+Math.random()*3; spray=(Math.random()-.5)*16; tag='barreled'; }
-  else if(off<.22){ q=.82; mph=92+Math.random()*8; la=23+Math.random()*8; spray=side*(8+off*40)+(Math.random()-.5)*12; tag='squared up'; }
-  else if(off<.40){ q=.60; mph=79+Math.random()*9; la=side<0?30+off*22:19-off*12; spray=side*(16+off*46); tag=side<0?'lifted':'lined'; }
-  else if(off<.62){ q=.36; mph=65+Math.random()*12; la=side<0?44+off*16:12-off*9; spray=side*(26+off*38); tag=side<0?'popped up':'chopped'; }
+  if(off<CONTACT.barrel){ q=1.00; mph=105+Math.random()*5; la=26+Math.random()*3; spray=(Math.random()-.5)*16; tag='barreled'; }
+  else if(off<CONTACT.good){ q=.82; mph=92+Math.random()*8; la=23+Math.random()*8; spray=side*(8+off*40)+(Math.random()-.5)*12; tag='squared up'; }
+  else if(off<CONTACT.solid){ q=.60; mph=79+Math.random()*9; la=side<0?30+off*22:19-off*12; spray=side*(16+off*46); tag=side<0?'lifted':'lined'; }
+  else if(off<CONTACT.fair){ q=.36; mph=65+Math.random()*12; la=side<0?44+off*16:12-off*9; spray=side*(26+off*38); tag=side<0?'popped up':'chopped'; }
   else { q=.12; mph=52+Math.random()*12; la=side<0?56:6; spray=side*(40+off*26); tag='fouled off'; }
   return {q,mph,la,spray,tag};
 }
@@ -1438,8 +1462,8 @@ function tick(){
     animatePitch(0);
     $('swingbtn').disabled=true;
     if(G.setT>1.25){G.phase='ready';G.pitchT=0;$('swingbtn').disabled=false;
-      $('pitchline').textContent=G.pitchLine||'Here it comes'}
-    else $('pitchline').textContent='Pitcher is set…';
+      $('pitchline').textContent='Tap when the bar hits gold'}
+    else $('pitchline').textContent=G.pitchLine||'Pitcher is set…';
   }else if(G.phase==='ready'){
     G.pitchT+=dt/G.pitchDur;
     G.meterT=clamp(G.pitchT,0,1);
@@ -1505,7 +1529,8 @@ function tick(){
 /* =======================================================================
    SHARED SCOREBOARD BRIDGE
    Posts landed swings to the parent /play page. Does not touch flight(),
-   qualityFrom(), park generation, or any physics constants (k stays 0.00116).
+   park generation, or any physics constants (k stays 0.00116).
+   qualityFrom() windows are CONTACT (slice 2); meter CSS is synced from the same object.
    ======================================================================= */
 (function () {
   var inner = landBall;
@@ -1537,6 +1562,7 @@ if(typeof THREE==='undefined'){
 }
 initThree();
 setTop();
+syncMeterZones();
 cam.position.copy(IDLE_POS);
 tick();
 if(S.team){goHub()}else{show('scSplash')}
