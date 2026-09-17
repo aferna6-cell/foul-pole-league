@@ -45,7 +45,7 @@ assert(html.includes("Tap when the bar hits gold"), "plain gold-window copy");
 assert(html.includes("id=\"goQuick\""), "first swing still the splash CTA");
 assert(html.includes("$('goQuick').onclick=()=>{ac();startMatch('derby',null,10,'Derby')}"), "first swing is free derby — no login");
 assert(html.includes("env(safe-area-inset-bottom)"), "in-game HUD uses safe-area-inset-bottom");
-assert(html.includes("#swingbtn") && html.includes("min-height:64px"), "SWING is a large thumb target");
+assert(html.includes("data-embedded"), "embedded iframe compact splash so Take a swing stays on screen");
 
 const contactM = html.match(
   /const CONTACT=\{barrel:([0-9.]+),good:([0-9.]+),solid:([0-9.]+),fair:([0-9.]+)\}/
