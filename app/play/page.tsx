@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { rpcMessage } from "@/lib/format";
+import { gameIframeSrc, liveMeetParkSeed } from "@/lib/meetPark";
 import type { ScoreboardPayload } from "@/lib/types";
 
 type SwingMsg = {
@@ -19,10 +20,13 @@ type SwingMsg = {
 export default function PlayPage() {
   const configured = supabaseConfigured();
   const [ticker, setTicker] = useState("Take a swing — no login.");
+  const [meetParkSeed, setMeetParkSeed] = useState<string | null>(null);
+  const [boardReady, setBoardReady] = useState(!configured);
   const [promptHomer, setPromptHomer] = useState(false);
   const [name, setName] = useState("");
   const [hasName, setHasName] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
 
   const load = useCallback(async () => {
     if (!configured) return;
@@ -33,11 +37,16 @@ export default function PlayPage() {
     });
     if (error) {
       setErr(rpcMessage(error));
+      setBoardReady(true);
       return;
     }
     const payload = data as ScoreboardPayload;
     const live = payload.meets.find((m) => m.status === "live");
+    const park = liveMeetParkSeed(payload.meets);
     if (live) setTicker(live.ticker);
+    else setTicker("Take a swing — no login.");
+    setMeetParkSeed(park);
+    setBoardReady(true);
     if (payload.player?.display_name) {
       setHasName(true);
       setName(payload.player.display_name);
@@ -86,7 +95,23 @@ export default function PlayPage() {
     return () => window.removeEventListener("message", onMsg);
   }, [configured, hasName, load]);
 
-  const iframeSrc = useMemo(() => "/foul-pole-league.html", []);
+  const iframeSrc = useMemo(() => gameIframeSrc(meetParkSeed), [meetParkSeed]);
+
+  const pushParkToFrame = useCallback(() => {
+    const win = frameRef.current?.contentWindow;
+    if (!win) return;
+    win.postMessage(
+      meetParkSeed
+        ? { source: "foul-pole-league-host", type: "set_park", park_seed: meetParkSeed }
+        : { source: "foul-pole-league-host", type: "clear_park" },
+      window.location.origin
+    );
+  }, [meetParkSeed]);
+
+  useEffect(() => {
+    if (!boardReady) return;
+    pushParkToFrame();
+  }, [boardReady, meetParkSeed, pushParkToFrame]);
 
   return (
     <>
@@ -95,8 +120,26 @@ export default function PlayPage() {
           Board
         </Link>
         <div className="ticker live">{ticker}</div>
+        {boardReady && meetParkSeed ? (
+          <span className="pill gold" title="Live meet forces this park for scoring swings">
+            park {meetParkSeed}
+          </span>
+        ) : boardReady ? (
+          <span className="pill">zip park</span>
+        ) : null}
       </div>
-      <iframe className="play-frame" title="Foul Pole League" src={iframeSrc} allow="autoplay" />
+      {boardReady ? (
+        <iframe
+          ref={frameRef}
+          className="play-frame"
+          title="Foul Pole League"
+          src={iframeSrc}
+          allow="autoplay"
+          onLoad={pushParkToFrame}
+        />
+      ) : (
+        <div className="play-frame" aria-hidden="true" />
+      )}
       {promptHomer ? (
         <div className="modal-scrim">
           <div className="modal">

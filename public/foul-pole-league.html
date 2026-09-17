@@ -381,7 +381,32 @@ function cpuSwing(power,r,P){
    ===================================================================== */
 let scene,cam,renderer,ballMesh,ballShadow,trail,trailPos,trailCount=0;
 let W=innerWidth,H=innerHeight;
-let parkGroup=null, P=makePark(S.zip,S.town,S.park);
+/* Live meet park: /play passes ?park_seed= (or postMessage). Does not change makePark/k. */
+let meetParkSeed=(function(){
+  try{
+    const q=new URLSearchParams(location.search).get('park_seed');
+    return (q&&q.trim())?q.trim():null;
+  }catch(e){return null}
+})();
+function parkFromMeetSeed(seed){
+  return makePark(seed,'Neutral park','Neutral Park');
+}
+let parkGroup=null, P=meetParkSeed?parkFromMeetSeed(meetParkSeed):makePark(S.zip,S.town,S.park);
+function lockMeetPark(seed){
+  const next=(seed&&String(seed).trim())?String(seed).trim():null;
+  if(next===meetParkSeed && P && (!next || P.zip===next)) return;
+  meetParkSeed=next;
+  P=meetParkSeed?parkFromMeetSeed(meetParkSeed):makePark(S.zip,S.town,S.park);
+  if(parkGroup) buildPark();
+  if(typeof setTop==='function') setTop();
+}
+window.addEventListener('message',function(ev){
+  if(ev.origin!==location.origin) return;
+  const d=ev.data;
+  if(!d||d.source!=='foul-pole-league-host') return;
+  if(d.type==='set_park' && d.park_seed) lockMeetPark(d.park_seed);
+  else if(d.type==='clear_park') lockMeetPark(null);
+});
 
 function tex(draw,w=512,h=512,rx=1,ry=1){
   const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);
@@ -1347,9 +1372,14 @@ $('saveClub').onclick=()=>{
   S.team=$('inTeam').value.trim()||((S.town||'Sandlot')+' Club');
   S.park=$('inPark').value.trim();
   save();
-  P=makePark(S.zip,S.town,S.park);
-  buildPark();recolorCrew();setTop();
-  toast('Home park set — '+P.name);
+  if(meetParkSeed){
+    recolorCrew();setTop();
+    toast('Live meet locks the park — '+P.name);
+  }else{
+    P=makePark(S.zip,S.town,S.park);
+    buildPark();recolorCrew();setTop();
+    toast('Home park set — '+P.name);
+  }
   goHub();
 };
 $('skipClub').onclick=()=>goHub();
@@ -1489,7 +1519,7 @@ function tick(){
         feet: L && L.feet ? L.feet : 0,
         is_homer: !!(L && L.homer),
         foul: !!(L && L.foul),
-        park_seed: (typeof P !== 'undefined' && P.zip) ? String(P.zip) : 'neutral-v1'
+        park_seed: meetParkSeed || ((typeof P !== 'undefined' && P.zip) ? String(P.zip) : 'neutral-v1')
       };
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(payload, window.location.origin);
