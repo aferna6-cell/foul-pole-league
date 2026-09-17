@@ -104,7 +104,7 @@ input, select { width: 100%; padding: 11px 12px; background: rgba(7,16,27,.7); b
   border-radius: 2px; color: var(--chalk); font-family: Archivo, sans-serif; font-size: 15px; font-weight: 600; }
 input:focus, select:focus { outline: none; border-color: var(--pole); }
 .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-.actions a, .actions button { flex: 1; text-align: center; }
+.actions a, .actions button { flex: 1; text-align: center; min-width: 132px; }
 .err { color: #ffb4a8; font-size: 13px; margin-top: 8px; }
 .ok { color: var(--pole); font-size: 13px; margin-top: 8px; }
 
@@ -133,6 +133,27 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
   border: 1px solid var(--line); border-top: 3px solid var(--pole); border-radius: 3px; padding: 22px; }
 
 .clubhouse { margin-top: 18px; }
+
+/* ---- create club / create challenge ---- */
+.swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch {
+  width: 38px; height: 38px; min-height: 38px; flex: none; padding: 0;
+  border: 2px solid transparent; border-radius: 2px; cursor: pointer;
+}
+.swatch[aria-pressed="true"] { border-color: var(--chalk); box-shadow: inset 0 0 0 2px rgba(0,0,0,.5); }
+.your-club { border: 1px solid var(--line); border-left: 3px solid var(--pole); padding: 10px 12px; margin-bottom: 12px; }
+.your-club-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.your-club-row > div:nth-child(2) { flex: 1; min-width: 0; }
+.club-chip { width: 26px; height: 26px; flex: none; border: 2px solid var(--line); border-radius: 2px; display: block; }
+.club-code {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 22px;
+  letter-spacing: 0.12em; color: var(--pole); flex: none;
+}
+input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
+.name-gate { border: 1px solid var(--line); border-left: 3px solid var(--pole); padding: 10px 12px; margin-bottom: 12px; }
+.name-gate label { margin-top: 8px; }
+.row > input { flex: 1; min-width: 140px; }
+.row > button { flex: none; }
 .muted { color: var(--dim); font-size: 13px; }
 
 @media (max-width: 640px) {

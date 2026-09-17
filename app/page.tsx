@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import CreateChallenge from "./components/CreateChallenge";
+import CreateClub from "./components/CreateClub";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { deadlineCopy, formatFeet, needMoreCopy, rpcMessage } from "@/lib/format";
@@ -9,6 +11,7 @@ import type {
   BoardRow,
   ClanOption,
   MeetPayload,
+  PlayerPayload,
   ScoreboardPayload,
   TownOption,
 } from "@/lib/types";
@@ -67,7 +70,27 @@ function Board({
   );
 }
 
-function MeetCard({ meet }: { meet: MeetPayload }) {
+function MeetCard({
+  meet,
+  player,
+  listed,
+  busy,
+  onToggleRoster,
+}: {
+  meet: MeetPayload;
+  player: PlayerPayload | null | undefined;
+  listed: boolean;
+  busy: boolean;
+  onToggleRoster: (meetId: string, on: boolean) => void;
+}) {
+  // You can only put your name on a card for a side you are actually on.
+  const mySideId =
+    meet.kind === "clan_vs_clan" ? player?.clan_id ?? null : player?.town_id ?? null;
+  const onHome = Boolean(mySideId) && mySideId === meet.home.id;
+  const onAway = Boolean(mySideId) && mySideId === meet.away.id;
+  const mine = onHome ? meet.home : onAway ? meet.away : null;
+  const full = mine ? mine.listed >= meet.roster_cap : false;
+
   return (
     <article className="card">
       <span className={`pill ${meet.status === "live" ? "gold" : ""}`}>{meet.status}</span>
@@ -94,6 +117,21 @@ function MeetCard({ meet }: { meet: MeetPayload }) {
       <p className="muted" style={{ marginTop: 12 }}>
         Window ends {deadlineCopy(meet.window_end)}. Series {meet.home_wins}–{meet.away_wins}.
       </p>
+      {mine && meet.status !== "final" ? (
+        <div className="actions">
+          <button
+            className={listed ? "ghost" : "primary"}
+            disabled={busy || (!listed && full)}
+            onClick={() => onToggleRoster(meet.id, !listed)}
+          >
+            {listed
+              ? "Take my name off"
+              : full
+                ? `Card full (${mine.listed}/${meet.roster_cap})`
+                : `Put me on the card (${mine.listed}/${meet.roster_cap})`}
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -183,6 +221,7 @@ export default function HomePage() {
   }
 
   const player = data?.player;
+  const myMeetIds: string[] = data?.my_meet_ids ?? [];
   const towns: TownOption[] = data?.towns ?? [];
   const clans: ClanOption[] = data?.clans ?? [];
   const supabase = configured ? getSupabaseBrowser() : null;
@@ -210,14 +249,53 @@ export default function HomePage() {
           Shared<em>scoreboard</em>
         </h1>
         <p className="tagline">
-          First swing is free — no login. Empty slots are the invite. Posted balls show up on
-          every open board in a few seconds.
+          First swing is free — no login. Start a club, call someone out, and the empty
+          slots are the invite. Posted balls show up on every open board in a few seconds.
         </p>
 
         <div className="grid meet-grid">
           {(data?.meets ?? []).map((m) => (
-            <MeetCard key={m.id} meet={m} />
+            <MeetCard
+              key={m.id}
+              meet={m}
+              player={player}
+              listed={myMeetIds.includes(m.id)}
+              busy={busy}
+              onToggleRoster={(meetId, on) =>
+                supabase &&
+                run(on ? "You are on the card." : "Name taken off.", () =>
+                  supabase.rpc("set_roster_self", {
+                    p_player_id: playerId,
+                    p_meet_id: meetId,
+                    p_on: on,
+                  })
+                )
+              }
+            />
           ))}
+        </div>
+
+        <div className="grid meet-grid">
+          {supabase ? (
+            <CreateClub
+              supabase={supabase}
+              playerId={playerId}
+              player={player}
+              towns={towns}
+              clans={clans}
+              onDone={load}
+            />
+          ) : null}
+          {supabase ? (
+            <CreateChallenge
+              supabase={supabase}
+              playerId={playerId}
+              player={player}
+              towns={towns}
+              clans={clans}
+              onDone={load}
+            />
+          ) : null}
         </div>
 
         <div className="boards">
