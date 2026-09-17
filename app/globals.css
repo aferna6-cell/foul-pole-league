@@ -103,8 +103,15 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
 
 .play-frame {
   position: fixed;
-  inset: calc(52px + env(safe-area-inset-top)) 0 env(safe-area-inset-bottom) 0;
-  border: 0; width: 100%; height: auto; background: #000;
+  top: calc(52px + env(safe-area-inset-top));
+  right: 0;
+  bottom: env(safe-area-inset-bottom);
+  left: 0;
+  border: 0;
+  width: 100%;
+  /* iframe is replaced: height:auto + inset will not stretch it */
+  height: calc(100dvh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  background: #000;
 }
 .play-top { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
   height: calc(52px + env(safe-area-inset-top));

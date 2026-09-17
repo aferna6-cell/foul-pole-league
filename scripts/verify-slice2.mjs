@@ -36,6 +36,7 @@ assert(meetPark.includes("park_seed=${encodeURIComponent(seed)}"), "iframe helpe
 
 assert(layout.includes('viewportFit: "cover"'), "Next viewport-fit=cover so env(safe-area-inset-*) is non-zero");
 assert(css.includes("env(safe-area-inset-bottom)"), "play chrome / dock must use safe-area-inset-bottom");
+assert(css.includes("100dvh - 52px"), "play iframe must have an explicit height (replaced element)");
 assert(css.includes("swing-dock"), "mobile Take a swing dock");
 assert(css.includes("position: fixed") && css.includes("swing-dock"), "dock is a fixed thumb-zone CTA, not clipped in the top rail");
 assert(page.includes('className="swing-dock"'), "board renders the dock CTA");

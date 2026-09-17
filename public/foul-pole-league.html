@@ -171,12 +171,19 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pole)}
   #matchcard{width:150px;top:58px;right:8px}
   #swingbtn{font-size:34px;padding:20px 16px;min-height:68px;max-width:none}
 }
-@media (max-height:700px){
-  h1.title{font-size:clamp(36px,10vw,64px)}
-  .tagline{font-size:13px;margin-top:8px}
-  .menu{margin-top:14px}
+@media (max-height:720px){
+  h1.title{font-size:clamp(32px,10vw,56px)}
+  #scSplash .tagline{display:none}
+  .menu{margin-top:12px}
   .panel{padding:16px}
+  .screen{align-items:flex-end}
 }
+/* /play iframe is short because of the host chrome — keep the yellow CTA on screen */
+html[data-embedded] h1.title{font-size:clamp(30px,9vw,48px)}
+html[data-embedded] #scSplash .tagline{display:none}
+html[data-embedded] .menu{margin-top:10px}
+html[data-embedded] .panel{padding:16px}
+html[data-embedded] .screen{align-items:flex-end}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -221,11 +228,13 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pole)}
   <div class="screen on pointer" id="scSplash">
     <div class="panel">
       <h1 class="title">Foul Pole<em>League</em></h1>
-      <p class="tagline">A home run derby played on your town's field. Swing solo, build a club, or run the bracket all the way to the national final.</p>
       <div class="menu">
         <button class="primary" id="goQuick"><span class="lbl">Take a swing<span class="desc" style="color:#3A4654">Tap when the bar hits gold. First one is free.</span></span><span class="arrow" style="color:#16202B">▸</span></button>
         <button id="goSetup"><span class="lbl">Set up my club<span class="desc">Name, colors, and your home park by zip.</span></span><span class="arrow">▸</span></button>
       </div>
+      <p class="tagline">A home run derby on your town's field. First swing is free.</p>
+    </div>
+  </div>
     </div>
   </div>
 
@@ -310,6 +319,7 @@ tr.me td:first-child{box-shadow:inset 3px 0 0 var(--pole)}
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
+if(window.parent!==window) document.documentElement.setAttribute('data-embedded','1');
 
 /* ---------- deterministic rng ---------- */
 function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
