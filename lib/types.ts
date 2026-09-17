@@ -3,6 +3,8 @@ export type MeetSide = {
   name: string;
   total_feet: number;
   slots: number;
+  /** Players named on the card. Distinct from `slots`, which is scoring balls. */
+  listed: number;
   slot_rows: { player_id: string; display_name: string | null; feet: number }[];
 };
 
@@ -18,6 +20,8 @@ export type MeetPayload = {
   away_wins: number;
   home: MeetSide;
   away: MeetSide;
+  /** Hard cap on names per side, enforced by a trigger. */
+  roster_cap: number;
   ticker: string;
 };
 
@@ -44,6 +48,10 @@ export type PlayerPayload = {
 };
 
 export type TownOption = { id: string; name: string; region_key: string };
+
+/** Cosmetic only. Nothing in scoring reads these. */
+export type ClanColors = { primary?: string; secondary?: string };
+
 export type ClanOption = {
   id: string;
   name: string;
@@ -51,6 +59,9 @@ export type ClanOption = {
   scope: "local" | "national";
   town_id: string | null;
   town_name: string | null;
+  colors: ClanColors;
+  captain_player_id: string | null;
+  members: number;
 };
 
 export type ScoreboardPayload = {
@@ -58,6 +69,8 @@ export type ScoreboardPayload = {
   region_key: string;
   player: PlayerPayload | null;
   meets: MeetPayload[];
+  /** Meets this player is named on. */
+  my_meet_ids: string[];
   towns: TownOption[];
   clans: ClanOption[];
   boards: {

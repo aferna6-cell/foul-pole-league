@@ -31,6 +31,8 @@ a:hover { text-decoration: underline; }
 }
 .toprail .cell { padding: 8px 14px; border-right: 1px solid var(--line); min-width: 0; }
 .toprail .cell:last-child { margin-left: auto; border-right: 0; border-left: 1px solid var(--line); }
+.toprail-swing { display: flex; align-items: center; }
+.toprail-swing .btn { width: 100%; white-space: nowrap; }
 .toprail .v.sm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .swing-dock { display: none; }
 .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
@@ -86,6 +88,11 @@ button, .btn {
   font-family: Archivo, sans-serif; font-weight: 700; font-size: 14px; border-radius: 2px;
   border: 1px solid var(--line); background: rgba(247,242,229,.06); color: var(--chalk);
   padding: 12px 16px; cursor: pointer; text-align: left;
+  /* inline-flex, not inline: an inline <a> leaks its vertical padding outside the
+     line box, which pushed the top-rail CTA 3px above the viewport (clipped under
+     the notch on iPhone landscape and iPad). */
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; /* iOS minimum tap target */
 }
 button.primary, a.btn.primary { background: var(--pole); color: #16202b; border-color: var(--pole); text-align: center; }
 button.ghost { background: transparent; }
@@ -97,7 +104,7 @@ input, select { width: 100%; padding: 11px 12px; background: rgba(7,16,27,.7); b
   border-radius: 2px; color: var(--chalk); font-family: Archivo, sans-serif; font-size: 15px; font-weight: 600; }
 input:focus, select:focus { outline: none; border-color: var(--pole); }
 .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-.actions a, .actions button { flex: 1; text-align: center; }
+.actions a, .actions button { flex: 1; text-align: center; min-width: 132px; }
 .err { color: #ffb4a8; font-size: 13px; margin-top: 8px; }
 .ok { color: var(--pole); font-size: 13px; margin-top: 8px; }
 
@@ -126,6 +133,27 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
   border: 1px solid var(--line); border-top: 3px solid var(--pole); border-radius: 3px; padding: 22px; }
 
 .clubhouse { margin-top: 18px; }
+
+/* ---- create club / create challenge ---- */
+.swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch {
+  width: 38px; height: 38px; min-height: 38px; flex: none; padding: 0;
+  border: 2px solid transparent; border-radius: 2px; cursor: pointer;
+}
+.swatch[aria-pressed="true"] { border-color: var(--chalk); box-shadow: inset 0 0 0 2px rgba(0,0,0,.5); }
+.your-club { border: 1px solid var(--line); border-left: 3px solid var(--pole); padding: 10px 12px; margin-bottom: 12px; }
+.your-club-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.your-club-row > div:nth-child(2) { flex: 1; min-width: 0; }
+.club-chip { width: 26px; height: 26px; flex: none; border: 2px solid var(--line); border-radius: 2px; display: block; }
+.club-code {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 22px;
+  letter-spacing: 0.12em; color: var(--pole); flex: none;
+}
+input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
+.name-gate { border: 1px solid var(--line); border-left: 3px solid var(--pole); padding: 10px 12px; margin-bottom: 12px; }
+.name-gate label { margin-top: 8px; }
+.row > input { flex: 1; min-width: 140px; }
+.row > button { flex: none; }
 .muted { color: var(--dim); font-size: 13px; }
 
 @media (max-width: 640px) {
@@ -136,11 +164,12 @@ input:focus, select:focus { outline: none; border-color: var(--pole); }
   .shell { padding-bottom: 132px; }
   .swing-dock {
     display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-    background: linear-gradient(180deg, rgba(7,16,27,0), rgba(7,16,27,.97) 28%);
+    /* opaque from the button down, so the hint never reads on top of board copy */
+    background: linear-gradient(180deg, rgba(7,16,27,0), var(--bg) 22%, var(--bg));
     padding: 16px max(16px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
   .swing-dock .btn {
-    display: block; width: 100%; text-align: center;
+    display: flex; width: 100%; text-align: center;
     font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 28px;
     letter-spacing: 0.04em; padding: 18px 16px;
   }

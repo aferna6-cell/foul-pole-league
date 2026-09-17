@@ -25,5 +25,25 @@ export function needMoreCopy(slots: number, windowEnd: string): string {
 export function rpcMessage(err: { message?: string } | null): string {
   if (!err?.message) return "That did not go through.";
   const m = err.message.replace(/^.*error: /i, "");
+
+  // The cooldown raise carries a raw Postgres timestamp and the word "clan",
+  // which is not what the board calls it. Say it the way a person would.
+  const cooldown = m.match(/clan switch cooldown until (.+)$/i);
+  if (cooldown) {
+    // Postgres hands back "2026-09-19 20:21:45.783199+00": a space instead of
+    // T, and a two-digit offset that Date rejects.
+    const iso = cooldown[1]
+      .trim()
+      .replace(" ", "T")
+      .replace(/([+-]\d{2})$/, "$1:00");
+    const until = new Date(iso);
+    if (!Number.isNaN(until.getTime())) {
+      return `You already switched clubs. You can move again after ${until.toLocaleString(
+        undefined,
+        { weekday: "short", hour: "numeric", minute: "2-digit" }
+      )}.`;
+    }
+    return "You already switched clubs recently — there is a 48-hour cooldown.";
+  }
   return m;
 }
