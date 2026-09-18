@@ -99,7 +99,7 @@ input:focus{outline:none;border-color:var(--pole)}
 #meter{height:34px;position:relative;border:2px solid rgba(247,242,229,.5);border-radius:2px;overflow:hidden;
   background:#0A1826;box-shadow:0 6px 24px rgba(0,0,0,.6)}
 #meter .zone{position:absolute;top:0;bottom:0}
-/* CONTACT.solid 0.40 / good 0.12 / barrel 0.04 — JS syncMeterZones() overwrites from the same numbers */
+/* CONTACT.solid 0.36 / good 0.09 / barrel 0.03 — JS syncMeterZones() overwrites from the same numbers */
 #zFair{left:30%;right:30%;background:rgba(28,85,64,.55)}
 #zGood{left:44%;right:44%;background:rgba(40,130,88,.75)}
 #zBarrel{left:48%;right:48%;background:var(--pole)}
@@ -826,8 +826,8 @@ function buildCrew(){
   });
 }
 
-const PITCH={release:new THREE.Vector3(1.1,6.6,42),plate:new THREE.Vector3(0,3.3,1.8),
-  mitt:new THREE.Vector3(0,2.4,-4.2)};
+const PITCH={release:new THREE.Vector3(1.1,5.9,42),plate:new THREE.Vector3(0,2.55,1.8),
+  mitt:new THREE.Vector3(0,1.85,-4.2)};
 
 function animatePitch(t){
   if(!pitcher)return;
@@ -1131,6 +1131,7 @@ function show(id){['scSplash','scSetup','scHub','scBracket','scResult','scBook']
    slice 1:  barrel 0.09 / good 0.22 / solid 0.40 / fair 0.62
    slice 2a: barrel 0.06 / good 0.16 / solid 0.40 / fair 0.62
    slice 2b: barrel 0.04 / good 0.12 / solid 0.40 / fair 0.62
+   slice 2c: barrel 0.03 / good 0.09 / solid 0.36 / fair 0.58  (Louis: still too easy)
 
    Windows alone did not fix "every hit is a homer". The good band was a flat
    92-100 mph plateau 256ms wide, and 92 mph at 25 deg clears this park, so any
@@ -1146,7 +1147,7 @@ function show(id){['scSplash','scSetup','scHub','scBracket','scResult','scBook']
 
    Gold is still a no-doubt homer. Off the wall is now the signature near miss
    (28-43% of swings) instead of a second kind of homer. */
-const CONTACT={barrel:.04,good:.12,solid:.40,fair:.62};
+const CONTACT={barrel:.03,good:.09,solid:.36,fair:.58};
 function meterInset(off){return ((1-off)/2*100)+'%'}
 function syncMeterZones(){
   const pairs=[['zBarrel','barrel'],['zGood','good'],['zFair','solid']];
@@ -1595,7 +1596,7 @@ function tick(){
    SHARED SCOREBOARD BRIDGE
    Posts landed swings to the parent /play page. Does not touch flight(),
    park generation, or any physics constants (k stays 0.00116).
-   qualityFrom() windows are CONTACT (slice 2); meter CSS is synced from the same object.
+   qualityFrom() windows are CONTACT (slice 2c); meter CSS is synced from the same object.
    ======================================================================= */
 (function () {
   var inner = landBall;
