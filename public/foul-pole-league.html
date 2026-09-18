@@ -770,13 +770,28 @@ function buildCrew(){
   knob.position.set(.52,-.42,.30);knob.rotation.set(-.78,0,-.40);batArms.add(knob);
   crew.add(batter);
 
-  // ---- catcher, crouched behind the plate
-  const cat=makePerson(0x2b2b30,0x2b2b30,0xC69568);
-  cat.position.set(0,-1.5,-5.2);cat.scale.set(1,.72,1);cat.rotation.y=0;
-  addArm(cat.userData.arms,cat.userData.jm,0,-.5,.85,-1.25,0,0);
-  const mitt=new THREE.Mesh(new THREE.SphereGeometry(.62,10,8),mat(0x7a4a22));
-  mitt.position.set(0,-.95,1.5);cat.userData.arms.add(mitt);
+  // ---- catcher, crouched behind the plate (Louis: visible target, not physics)
+  // Was sunk (y=-1.5) in dark gear and easy to miss from the batter cam.
+  const cat=makePerson(0x1E3A5F,0x1a1a1a,0xC69568);
+  cat.position.set(0,0,-4.6);cat.scale.set(1.05,.78,1.05);cat.rotation.y=0;
+  // squat: knees forward, mitt up as the pitch target
+  cat.children[0].rotation.x=.55; // legL
+  cat.children[1].rotation.x=.55; // legR
+  cat.children[0].position.z=.55;cat.children[1].position.z=.55;
+  cat.children[0].position.y=1.15;cat.children[1].position.y=1.15;
+  addArm(cat.userData.arms,cat.userData.jm,-.55,-.35,.55,-1.05,0,.35);
+  addArm(cat.userData.arms,cat.userData.jm,.35,-.15,.95,-1.35,0,-.15);
+  // mitt — bigger + warmer so it reads against the dirt
+  const mitt=new THREE.Mesh(new THREE.SphereGeometry(.78,12,10),mat(0xC47A3A));
+  mitt.position.set(.15,-1.05,1.75);cat.userData.arms.add(mitt);
+  // mask / helmet brow so the silhouette is obviously a catcher
+  const mask=new THREE.Mesh(new THREE.BoxGeometry(.55,.42,.35),mat(0x222228));
+  mask.position.set(0,5.55,.42);cat.add(mask);
+  const bars=new THREE.Mesh(new THREE.BoxGeometry(.48,.28,.06),mat(0x999999));
+  bars.position.set(0,5.52,.62);cat.add(bars);
+  cat.userData.mitt=mitt;
   crew.add(cat);
+  crew.userData.catcher=cat;
 
   // ---- umpire behind the catcher
   const ump=makePerson(0x15151a,0x15151a,0xC69568);
@@ -836,6 +851,12 @@ function animatePitch(t){
   }else if(t>=.50&&t<.62){
     pitchBall.visible=true;
     pitchBall.position.lerpVectors(PITCH.plate,PITCH.mitt,(t-.50)/.12);
+    const c=crew&&crew.userData.catcher;
+    if(c&&c.userData.mitt){
+      // mitt rides up to meet the ball — visual only
+      const u=clamp((t-.50)/.12,0,1);
+      c.userData.mitt.position.y=-1.05+u*.35;
+    }
   }else pitchBall.visible=false;
 }
 
