@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { rpcMessage } from "@/lib/format";
 import type { ClanOption, PlayerPayload, TownOption } from "@/lib/types";
@@ -65,6 +65,7 @@ export default function CreateClub({
   const [secondary, setSecondary] = useState("#E0A21A");
   const [joinCode, setJoinCode] = useState("");
   const [gateName, setGateName] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [made, setMade] = useState<{ name: string; code: string } | null>(null);
@@ -137,6 +138,7 @@ export default function CreateClub({
       setErr(rpcMessage(error));
       return;
     }
+    setOpen(true);
     await onDone();
   }
 
@@ -156,8 +158,17 @@ export default function CreateClub({
     await onDone();
   }
 
+  function openCreate() {
+    setOpen(true);
+    setErr(null);
+    if (!named) {
+      // Name gate is the real next step — do not dump people into /play.
+      queueMicrotask(() => nameInputRef.current?.focus());
+    }
+  }
+
   return (
-    <section className="card">
+    <section className="card" id="start-club">
       <h2>Start a club</h2>
       <p className="sub">
         A club is who you swing for. You get a code — send it to anyone you want on your
@@ -207,6 +218,7 @@ export default function CreateClub({
           <div className="row">
             <input
               id="gate-name"
+              ref={nameInputRef}
               maxLength={24}
               value={gateName}
               placeholder="Anything but a legal name"
@@ -319,9 +331,14 @@ export default function CreateClub({
         </>
       ) : (
         <div className="actions">
-          <button className="primary" disabled={!named} onClick={() => setOpen(true)}>
+          <button className="primary" type="button" onClick={openCreate}>
             {myClan ? "Start a different club" : "Create a club"}
           </button>
+          {!named ? (
+            <p className="muted">
+              First save a display name above — swinging never needs one; a club on the board does.
+            </p>
+          ) : null}
         </div>
       )}
 

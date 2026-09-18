@@ -31,7 +31,8 @@ a:hover { text-decoration: underline; }
 }
 .toprail .cell { padding: 8px 14px; border-right: 1px solid var(--line); min-width: 0; }
 .toprail .cell:last-child { margin-left: auto; border-right: 0; border-left: 1px solid var(--line); }
-.toprail-swing { display: flex; align-items: center; }
+.toprail-actions { display: flex; align-items: center; gap: 8px; }
+.toprail-actions .btn { white-space: nowrap; }
 .toprail-swing .btn { width: 100%; white-space: nowrap; }
 .toprail .v.sm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .swing-dock { display: none; }
@@ -160,21 +161,27 @@ input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
   .slots { grid-template-columns: repeat(9, minmax(0, 1fr)); }
   .slot { font-size: 10px; height: 30px; }
   /* Yellow Take a swing was clipped off the right of the top rail on iPhone. */
-  .toprail-swing { display: none; }
-  .shell { padding-bottom: 132px; }
+  .toprail-actions { display: none; }
+  .shell { padding-bottom: 168px; }
   .swing-dock {
     display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     /* opaque from the button down, so the hint never reads on top of board copy */
     background: linear-gradient(180deg, rgba(7,16,27,0), var(--bg) 22%, var(--bg));
     padding: 16px max(16px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
+  .swing-dock-row { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; }
   .swing-dock .btn {
-    display: flex; width: 100%; text-align: center;
-    font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 28px;
-    letter-spacing: 0.04em; padding: 18px 16px;
+    display: flex; width: 100%; text-align: center; justify-content: center; align-items: center;
+    font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 24px;
+    letter-spacing: 0.04em; padding: 16px 12px;
   }
   .swing-dock .hint {
     display: block; text-align: center; color: var(--dim); font-size: 13px; margin-top: 8px; line-height: 1.4;
   }
   .swing-dock .btn:hover { text-decoration: none; }
+}
+
+#start-club,
+#challenge {
+  scroll-margin-bottom: 160px;
 }

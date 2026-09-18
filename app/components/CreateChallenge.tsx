@@ -91,7 +91,7 @@ export default function CreateChallenge({
           : null;
 
   return (
-    <section className="card">
+    <section className="card" id="challenge">
       <h2>Challenge someone</h2>
       <p className="sub">
         Pick who you want, set how long the window stays open, and the meet goes on the
@@ -188,7 +188,14 @@ export default function CreateChallenge({
         <>
           {blocked ? <p className="muted">{blocked}</p> : null}
           <div className="actions">
-            <button className="primary" disabled={!named} onClick={() => setOpen(true)}>
+            <button
+              className="primary"
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                setErr(null);
+              }}
+            >
               Create a challenge
             </button>
           </div>
