@@ -238,7 +238,10 @@ export default function HomePage() {
           <div className="k">Ticker</div>
           <div className="v sm">{liveTicker}</div>
         </div>
-        <div className="cell toprail-swing">
+        <div className="cell toprail-actions">
+          <a className="btn" href="#start-club">
+            Start a club
+          </a>
           <Link className="btn primary" href="/play">
             Take a swing
           </Link>
@@ -435,10 +438,17 @@ export default function HomePage() {
         </section>
       </main>
       <div className="swing-dock">
-        <Link className="btn primary" href="/play">
-          Take a swing
-        </Link>
-        <span className="hint">Tap when the bar hits gold. First swing is free — no login.</span>
+        <div className="swing-dock-row">
+          <a className="btn" href="#start-club">
+            Start a club
+          </a>
+          <Link className="btn primary" href="/play">
+            Take a swing
+          </Link>
+        </div>
+        <span className="hint">
+          Club = shared board. Swing = derby. First swing is free — no login.
+        </span>
       </div>
     </>
   );
