@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CreateChallenge from "./components/CreateChallenge";
 import CreateClub from "./components/CreateClub";
+import ShareMeet from "./components/ShareMeet";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { deadlineCopy, formatFeet, needMoreCopy, rpcMessage } from "@/lib/format";
@@ -76,12 +78,14 @@ function MeetCard({
   listed,
   busy,
   onToggleRoster,
+  highlight,
 }: {
   meet: MeetPayload;
   player: PlayerPayload | null | undefined;
   listed: boolean;
   busy: boolean;
   onToggleRoster: (meetId: string, on: boolean) => void;
+  highlight?: boolean;
 }) {
   // You can only put your name on a card for a side you are actually on.
   const mySideId =
@@ -92,7 +96,11 @@ function MeetCard({
   const full = mine ? mine.listed >= meet.roster_cap : false;
 
   return (
-    <article className="card">
+    <article
+      className={`card${highlight ? " meet-highlight" : ""}`}
+      id={`meet-${meet.id}`}
+      data-meet-id={meet.id}
+    >
       <span className={`pill ${meet.status === "live" ? "gold" : ""}`}>{meet.status}</span>
       <span className="pill">{meet.level}</span>
       <span className="pill">{meet.kind === "clan_vs_clan" ? "clan meet" : "town vs town"}</span>
@@ -117,26 +125,37 @@ function MeetCard({
       <p className="muted" style={{ marginTop: 12 }}>
         Window ends {deadlineCopy(meet.window_end)}. Series {meet.home_wins}–{meet.away_wins}.
       </p>
-      {mine && meet.status !== "final" ? (
-        <div className="actions">
-          <button
-            className={listed ? "ghost" : "primary"}
-            disabled={busy || (!listed && full)}
-            onClick={() => onToggleRoster(meet.id, !listed)}
-          >
-            {listed
-              ? "Take my name off"
-              : full
-                ? `Card full (${mine.listed}/${meet.roster_cap})`
-                : `Put me on the card (${mine.listed}/${meet.roster_cap})`}
-          </button>
-        </div>
-      ) : null}
+      {(() => {
+        const canShare = meet.status === "live" || meet.status === "scheduled";
+        const canRoster = Boolean(mine) && meet.status !== "final";
+        if (!canShare && !canRoster) return null;
+        return (
+          <div className="actions">
+            {canShare ? <ShareMeet meet={meet} /> : null}
+            {canRoster ? (
+              <button
+                className={listed ? "ghost" : "primary"}
+                disabled={busy || (!listed && full)}
+                onClick={() => onToggleRoster(meet.id, !listed)}
+              >
+                {listed
+                  ? "Take my name off"
+                  : full
+                    ? `Card full (${mine!.listed}/${meet.roster_cap})`
+                    : `Put me on the card (${mine!.listed}/${meet.roster_cap})`}
+              </button>
+            ) : null}
+          </div>
+        );
+      })()}
     </article>
   );
 }
 
-export default function HomePage() {
+function HomePage() {
+  const searchParams = useSearchParams();
+  const deepMeetId = searchParams.get("meet");
+  const scrolledRef = useRef<string | null>(null);
   const [data, setData] = useState<ScoreboardPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -185,6 +204,16 @@ export default function HomePage() {
       window.clearInterval(poll);
     };
   }, [configured, load]);
+
+
+  useEffect(() => {
+    if (!deepMeetId || !data?.meets?.length) return;
+    if (scrolledRef.current === deepMeetId) return;
+    const el = document.getElementById(`meet-${deepMeetId}`);
+    if (!el) return;
+    scrolledRef.current = deepMeetId;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [deepMeetId, data]);
 
   const liveTicker = useMemo(() => {
     const live = data?.meets.find((m) => m.status === "live");
@@ -264,6 +293,7 @@ export default function HomePage() {
               player={player}
               listed={myMeetIds.includes(m.id)}
               busy={busy}
+              highlight={deepMeetId === m.id}
               onToggleRoster={(meetId, on) =>
                 supabase &&
                 run(on ? "You are on the card." : "Name taken off.", () =>
@@ -451,5 +481,14 @@ export default function HomePage() {
         </span>
       </div>
     </>
+  );
+}
+
+
+export default function HomePageGate() {
+  return (
+    <Suspense fallback={<main className="shell"><p className="muted">Loading board…</p></main>}>
+      <HomePage />
+    </Suspense>
   );
 }

@@ -185,3 +185,21 @@ input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
 #challenge {
   scroll-margin-bottom: 160px;
 }
+
+/* ---- share card (§5b) ---- */
+.meet-highlight {
+  box-shadow: 0 0 0 2px var(--pole), 0 0 24px rgba(255, 210, 63, 0.25);
+}
+.share-sheet { max-width: 440px; }
+.share-preview {
+  display: block; width: 216px; height: 384px; margin: 8px auto 12px;
+  border: 1px solid var(--line); border-radius: 2px; background: var(--bg);
+  object-fit: cover;
+}
+.share-blurb {
+  width: 100%; padding: 11px 12px; background: rgba(7,16,27,.7);
+  border: 1px solid var(--line); border-radius: 2px; color: var(--chalk);
+  font-family: Archivo, sans-serif; font-size: 13.5px; font-weight: 600;
+  line-height: 1.45; resize: vertical; min-height: 88px;
+}
+.play-top .ghost { flex: none; }
