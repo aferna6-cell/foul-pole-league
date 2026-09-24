@@ -96,6 +96,9 @@ const playSrc = fs.readFileSync(path.join(root, "app/play/page.tsx"), "utf8");
 assert(shareSrc.includes("meetDeepLink"), "shareCard exports deep link");
 assert(drawSrc.includes("1080") && drawSrc.includes("1920"), "1080x1920");
 assert(drawSrc.includes("for (let i = 0; i < 9; i++)"), "draws all 9 slots");
+assert(drawSrc.includes("drawSideStacked") || drawSrc.includes("slotW = (w - gap * 8) / 9"), "slots scale to width");
+assert(drawSrc.includes("needs ${needHome}"), "per-side need copy on card");
+assert(drawSrc.includes("drawWrappedUrl") || drawSrc.includes("breakUrl"), "URL wrap helper");
 assert(pageSrc.includes("<ShareMeet"), "board Share");
 assert(playSrc.includes("<ShareMeet"), "play Share");
 assert(playSrc.includes('searchParams.get("meet")'), "play deep link");
@@ -134,12 +137,31 @@ async function renderWithPlaywright() {
   await page.waitForTimeout(500);
 
   async function shot(fixture, name) {
-    const dataUrl = await page.evaluate((data) => {
+    const geom = await page.evaluate((data) => {
       const c = document.getElementById("c");
       const ctx = c.getContext("2d");
       ShareCardDraw.drawMeetShareCard(ctx, data);
-      return c.toDataURL("image/png");
+      // Probe: rightmost non-bg pixel in lower-mid band should be well inside canvas
+      const W = c.width, H = c.height;
+      const row = Math.floor(H * 0.42);
+      const bg = [7, 16, 27];
+      let rightmost = 0;
+      const img = ctx.getImageData(0, row, W, 1).data;
+      for (let x = 0; x < W; x++) {
+        const i = x * 4;
+        const d = Math.abs(img[i]-bg[0]) + Math.abs(img[i+1]-bg[1]) + Math.abs(img[i+2]-bg[2]);
+        if (d > 30) rightmost = x;
+      }
+      return { rightmost, W, margin: W - 1 - rightmost };
     }, fixture);
+    // Card content must leave >= 30px right margin (slots inside panel inset)
+    if (geom.margin < 30) {
+      console.error("FAIL geometry:", name, geom);
+      process.exit(1);
+    }
+    const dataUrl = await page.evaluate(() => {
+      return document.getElementById("c").toDataURL("image/png");
+    });
     const buf = Buffer.from(dataUrl.split(",")[1], "base64");
     assert(buf.length > 5000, `${name} too small (${buf.length})`);
     assert(buf[0] === 0x89 && buf[1] === 0x50, `${name} not PNG`);
@@ -148,8 +170,20 @@ async function renderWithPlaywright() {
     console.log("wrote", dest, buf.length, "bytes");
   }
 
+  const longFixture = {
+    id: "meet-long-name-fixture-003",
+    status: "live",
+    window_end: "2026-09-24T01:00:00.000Z",
+    home: { name: "New Haven Harbor Hawks", total_feet: 12450, slots: 7 },
+    away: { name: "Bridgeport Sound Tigers FC", total_feet: 10890, slots: 3 },
+  };
+  assert(longFixture.home.name.length >= 20, "long home name");
+  assert(longFixture.away.name.length >= 20, "long away name");
+  assert(String(longFixture.home.total_feet).length >= 5, "5-digit feet");
+
   await shot(liveFixture, "share-card-live.png");
   await shot(finalFixture, "share-card-final.png");
+  await shot(longFixture, "share-card-long-name.png");
   await browser.close();
   try { fs.unlinkSync(iifePath); } catch {}
   return true;
