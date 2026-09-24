@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ShareMeet from "@/app/components/ShareMeet";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { rpcMessage } from "@/lib/format";
-import { gameIframeSrc, liveMeetParkSeed } from "@/lib/meetPark";
-import type { ScoreboardPayload } from "@/lib/types";
+import { gameIframeSrc } from "@/lib/meetPark";
+import type { MeetPayload, ScoreboardPayload } from "@/lib/types";
 
 type SwingMsg = {
   source?: string;
@@ -17,9 +19,20 @@ type SwingMsg = {
   park_seed?: string;
 };
 
-export default function PlayPage() {
+function pickMeet(meets: MeetPayload[], meetId: string | null): MeetPayload | undefined {
+  if (meetId) {
+    const hit = meets.find((m) => m.id === meetId);
+    if (hit) return hit;
+  }
+  return meets.find((m) => m.status === "live");
+}
+
+function PlayPage() {
   const configured = supabaseConfigured();
+  const searchParams = useSearchParams();
+  const deepMeetId = searchParams.get("meet");
   const [ticker, setTicker] = useState("Take a swing — no login.");
+  const [activeMeet, setActiveMeet] = useState<MeetPayload | null>(null);
   const [meetParkSeed, setMeetParkSeed] = useState<string | null>(null);
   const [boardReady, setBoardReady] = useState(!configured);
   const [promptHomer, setPromptHomer] = useState(false);
@@ -41,17 +54,23 @@ export default function PlayPage() {
       return;
     }
     const payload = data as ScoreboardPayload;
-    const live = payload.meets.find((m) => m.status === "live");
-    const park = liveMeetParkSeed(payload.meets);
-    if (live) setTicker(live.ticker);
-    else setTicker("Take a swing — no login.");
-    setMeetParkSeed(park);
+    const meet = pickMeet(payload.meets, deepMeetId);
+    if (meet) {
+      setTicker(meet.ticker);
+      setActiveMeet(meet);
+      // Only force neutral park while the selected meet is live.
+      setMeetParkSeed(meet.status === "live" ? meet.park_seed?.trim() || null : null);
+    } else {
+      setTicker("Take a swing — no login.");
+      setActiveMeet(null);
+      setMeetParkSeed(null);
+    }
     setBoardReady(true);
     if (payload.player?.display_name) {
       setHasName(true);
       setName(payload.player.display_name);
     }
-  }, [configured]);
+  }, [configured, deepMeetId]);
 
   useEffect(() => {
     void load();
@@ -120,6 +139,9 @@ export default function PlayPage() {
           Board
         </Link>
         <div className="ticker live">{ticker}</div>
+        {activeMeet && activeMeet.status === "live" ? (
+          <ShareMeet meet={activeMeet} compact />
+        ) : null}
         {boardReady && meetParkSeed ? (
           <span className="pill gold" title="Live meet forces this park for scoring swings">
             park {meetParkSeed}
@@ -182,5 +204,14 @@ export default function PlayPage() {
         </div>
       ) : null}
     </>
+  );
+}
+
+
+export default function PlayPageGate() {
+  return (
+    <Suspense fallback={<div className="play-top"><div className="ticker">Loading…</div></div>}>
+      <PlayPage />
+    </Suspense>
   );
 }
