@@ -23,6 +23,33 @@ export type MeetPayload = {
   /** Hard cap on names per side, enforced by a trigger. */
   roster_cap: number;
   ticker: string;
+  /** Set on bracket rounds. Ordinary meets leave these empty. */
+  tournament_id?: string | null;
+  round?: number | null;
+  bracket_slot?: number | null;
+  round_label?: "QF" | "SF" | "F" | null;
+};
+
+export type TournamentEntry = {
+  clan_id: string;
+  name: string;
+  seed: number;
+};
+
+export type TournamentPayload = {
+  id: string;
+  name: string;
+  level: "local" | "national";
+  kind: "clan_vs_clan";
+  size: number;
+  status: "scheduled" | "live" | "final";
+  round_hours: number;
+  creator_player_id: string;
+  champion_clan_id: string | null;
+  champion_name: string | null;
+  created_at: string;
+  entries: TournamentEntry[];
+  meets: MeetPayload[];
 };
 
 export type BoardRow = {
@@ -31,6 +58,8 @@ export type BoardRow = {
   feet: number;
   region_key?: string | null;
   scope?: string | null;
+  /** Championships from tournaments.champion_clan_id. Not part of the feet sort. */
+  titles?: number;
 };
 
 export type PlayerPayload = {
@@ -69,6 +98,8 @@ export type ScoreboardPayload = {
   region_key: string;
   player: PlayerPayload | null;
   meets: MeetPayload[];
+  /** 8-clan brackets. Absent until the tournaments migration is applied. */
+  tournaments?: TournamentPayload[];
   /** Meets this player is named on. */
   my_meet_ids: string[];
   towns: TownOption[];

@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import BracketBoard from "./components/BracketBoard";
 import CreateChallenge from "./components/CreateChallenge";
 import CreateClub from "./components/CreateClub";
+import CreateTournament from "./components/CreateTournament";
 import ShareMeet from "./components/ShareMeet";
+import { bracketFixture } from "@/lib/bracketFixture";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { deadlineCopy, formatFeet, needMoreCopy, rpcMessage } from "@/lib/format";
@@ -36,11 +39,13 @@ function Board({
   sub,
   rows,
   me,
+  showTitles,
 }: {
   title: string;
   sub: string;
   rows: BoardRow[];
   me?: string | null;
+  showTitles?: boolean;
 }) {
   return (
     <section className="card">
@@ -54,6 +59,7 @@ function Board({
             <tr>
               <th>#</th>
               <th>Name</th>
+              {showTitles ? <th className="titles">Titles</th> : null}
               <th style={{ textAlign: "right" }}>Feet</th>
             </tr>
           </thead>
@@ -62,6 +68,7 @@ function Board({
               <tr key={r.id} className={me && r.id === me ? "me" : undefined}>
                 <td>{i + 1}</td>
                 <td>{r.name}</td>
+                {showTitles ? <td className="titles">{r.titles ?? 0}</td> : null}
                 <td className="n">{formatFeet(r.feet)}</td>
               </tr>
             ))}
@@ -102,6 +109,7 @@ function MeetCard({
       data-meet-id={meet.id}
     >
       <span className={`pill ${meet.status === "live" ? "gold" : ""}`}>{meet.status}</span>
+      {meet.round_label ? <span className="pill gold">{meet.round_label}</span> : null}
       <span className="pill">{meet.level}</span>
       <span className="pill">{meet.kind === "clan_vs_clan" ? "clan meet" : "town vs town"}</span>
       <span className="pill">park {meet.park_seed}</span>
@@ -155,8 +163,11 @@ function MeetCard({
 function HomePage() {
   const searchParams = useSearchParams();
   const deepMeetId = searchParams.get("meet");
+  const fixture = searchParams.get("fixture") === "bracket";
   const scrolledRef = useRef<string | null>(null);
-  const [data, setData] = useState<ScoreboardPayload | null>(null);
+  const [data, setData] = useState<ScoreboardPayload | null>(() =>
+    fixture ? bracketFixture() : null
+  );
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -166,6 +177,10 @@ function HomePage() {
   const configured = supabaseConfigured();
 
   const load = useCallback(async () => {
+    if (fixture) {
+      setData(bracketFixture());
+      return;
+    }
     if (!configured) return;
     const supabase = getSupabaseBrowser();
     const playerId = getPlayerId();
@@ -183,11 +198,11 @@ function HomePage() {
     if (next.player?.display_name) setName(next.player.display_name);
     if (next.player?.town_id) setTownId(next.player.town_id);
     if (next.player?.clan_id) setClanId(next.player.clan_id);
-  }, [configured]);
+  }, [configured, fixture]);
 
   useEffect(() => {
     void load();
-    if (!configured) return;
+    if (!configured || fixture) return;
     const supabase = getSupabaseBrowser();
     const channel = supabase
       .channel("live-board")
@@ -203,7 +218,7 @@ function HomePage() {
       void supabase.removeChannel(channel);
       window.clearInterval(poll);
     };
-  }, [configured, load]);
+  }, [configured, fixture, load]);
 
 
   useEffect(() => {
@@ -236,7 +251,7 @@ function HomePage() {
     }
   }
 
-  if (!configured) {
+  if (!configured && !fixture) {
     return (
       <main className="shell">
         <h1 className="title">Foul Pole<em>League</em></h1>
@@ -265,7 +280,7 @@ function HomePage() {
         </div>
         <div className="cell">
           <div className="k">Ticker</div>
-          <div className="v sm">{liveTicker}</div>
+          <div className="v sm" id="live-ticker">{liveTicker}</div>
         </div>
         <div className="cell toprail-actions">
           <a className="btn" href="#start-club">
@@ -284,6 +299,14 @@ function HomePage() {
           First swing is free — no login. Start a club, call someone out, and the empty
           slots are the invite. Posted balls show up on every open board in a few seconds.
         </p>
+        {fixture ? (
+          <p className="fixture-banner">
+            Fixture bracket for preview — Harbor Bracket, not a live Supabase meet.
+            The quarterfinal line is the usual ticker with a QF prefix.
+          </p>
+        ) : null}
+
+        <BracketBoard tournaments={data?.tournaments ?? []} />
 
         <div className="grid meet-grid">
           {(data?.meets ?? []).map((m) => (
@@ -329,6 +352,16 @@ function HomePage() {
               onDone={load}
             />
           ) : null}
+          {supabase ? (
+            <CreateTournament
+              supabase={supabase}
+              playerId={playerId}
+              player={player}
+              clans={clans}
+              tournaments={data?.tournaments ?? []}
+              onDone={load}
+            />
+          ) : null}
         </div>
 
         <div className="boards">
@@ -346,9 +379,10 @@ function HomePage() {
           />
           <Board
             title="Local clans"
-            sub="Clan meets in this region. National membership is not a filter."
+            sub="Clan meets in this region. Titles are brackets won. Feet still sort the board."
             rows={data?.boards.local_clans ?? []}
             me={player?.clan_id}
+            showTitles
           />
           <Board
             title="National towns"
@@ -358,9 +392,10 @@ function HomePage() {
           />
           <Board
             title="National clans"
-            sub="Every clan, ranked nationally."
+            sub="Every clan, ranked nationally. Titles are brackets won, not a second score."
             rows={data?.boards.national_clans ?? []}
             me={player?.clan_id}
+            showTitles
           />
           <Board
             title="Personal best"

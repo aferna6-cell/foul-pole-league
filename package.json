@@ -7,9 +7,10 @@
     "start": "next start",
     "verify:meet-park": "node scripts/verify-meet-park.mjs",
     "verify:slice2": "node scripts/verify-slice2.mjs",
-    "verify": "node scripts/verify-meet-park.mjs && node scripts/verify-slice2.mjs && node scripts/verify-hr-rate.mjs",
+    "verify": "node scripts/verify-meet-park.mjs && node scripts/verify-slice2.mjs && node scripts/verify-hr-rate.mjs && node scripts/verify-tournament.mjs",
     "verify:hr-rate": "node scripts/verify-hr-rate.mjs",
-    "verify:share-card": "node scripts/verify-share-card.mjs"
+    "verify:share-card": "node scripts/verify-share-card.mjs",
+    "verify:tournament": "node scripts/verify-tournament.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -18,6 +19,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
