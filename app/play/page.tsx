@@ -7,6 +7,7 @@ import ShareMeet from "@/app/components/ShareMeet";
 import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { rpcMessage } from "@/lib/format";
+import { fixtureLiveMeet } from "@/lib/bracketFixture";
 import { gameIframeSrc } from "@/lib/meetPark";
 import type { MeetPayload, ScoreboardPayload } from "@/lib/types";
 
@@ -31,10 +32,14 @@ function PlayPage() {
   const configured = supabaseConfigured();
   const searchParams = useSearchParams();
   const deepMeetId = searchParams.get("meet");
-  const [ticker, setTicker] = useState("Take a swing — no login.");
-  const [activeMeet, setActiveMeet] = useState<MeetPayload | null>(null);
-  const [meetParkSeed, setMeetParkSeed] = useState<string | null>(null);
-  const [boardReady, setBoardReady] = useState(!configured);
+  const fixture = searchParams.get("fixture") === "bracket";
+  const seeded = fixture ? fixtureLiveMeet() : null;
+  const [ticker, setTicker] = useState(seeded?.ticker ?? "Take a swing — no login.");
+  const [activeMeet, setActiveMeet] = useState<MeetPayload | null>(seeded);
+  const [meetParkSeed, setMeetParkSeed] = useState<string | null>(
+    seeded?.status === "live" ? seeded.park_seed : null
+  );
+  const [boardReady, setBoardReady] = useState(!configured || fixture);
   const [promptHomer, setPromptHomer] = useState(false);
   const [name, setName] = useState("");
   const [hasName, setHasName] = useState(false);
@@ -42,6 +47,14 @@ function PlayPage() {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
   const load = useCallback(async () => {
+    if (fixture) {
+      const meet = fixtureLiveMeet();
+      setTicker(meet.ticker);
+      setActiveMeet(meet);
+      setMeetParkSeed(meet.status === "live" ? meet.park_seed : null);
+      setBoardReady(true);
+      return;
+    }
     if (!configured) return;
     const supabase = getSupabaseBrowser();
     const { data, error } = await supabase.rpc("scoreboard_payload", {
@@ -70,11 +83,11 @@ function PlayPage() {
       setHasName(true);
       setName(payload.player.display_name);
     }
-  }, [configured, deepMeetId]);
+  }, [configured, deepMeetId, fixture]);
 
   useEffect(() => {
     void load();
-    if (!configured) return;
+    if (!configured || fixture) return;
     const supabase = getSupabaseBrowser();
     const channel = supabase
       .channel("play-board")
@@ -87,7 +100,7 @@ function PlayPage() {
       void supabase.removeChannel(channel);
       window.clearInterval(poll);
     };
-  }, [configured, load]);
+  }, [configured, fixture, load]);
 
   useEffect(() => {
     async function onMsg(ev: MessageEvent<SwingMsg>) {
@@ -138,7 +151,7 @@ function PlayPage() {
         <Link href="/" className="btn ghost" style={{ width: "auto", padding: "8px 10px" }}>
           Board
         </Link>
-        <div className="ticker live">{ticker}</div>
+        <div className="ticker live" id="play-ticker">{ticker}</div>
         {activeMeet && activeMeet.status === "live" ? (
           <ShareMeet meet={activeMeet} compact />
         ) : null}

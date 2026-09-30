@@ -2,7 +2,7 @@
 
 Browser home-run derby with a **shared live scoreboard**. Open a link, swing, watch the board update on every other client.
 
-Cosmetics, ads, Elo, brackets, and Stripe are out of this slice.
+Cosmetics, ads, Elo, and Stripe are out. Eight-club brackets are in — local (one town) and national (any eight). Town-vs-town brackets stay parked.
 
 ## Play
 
@@ -43,6 +43,14 @@ Writes go through RPCs (`post_swing`, `join_clan`, `scoreboard_payload`, …). D
 Anon `SECURITY DEFINER` RPCs are intentional: first swing has no login, so the browser uses the publishable key only. Logic lives in `private.*`; table writes are not granted to `anon`.
 
 This migration is already applied to project `cchcuhksccbeccendewt`. A fresh project can run the SQL file as-is.
+
+Brackets are a later file and are **not** applied to production by this change. The three earlier files are already on project `cchcuhksccbeccendewt`. Run only the new file, once, in the Supabase SQL editor for that project:
+
+```sql
+-- supabase/migrations/20260930160000_tournaments.sql
+```
+
+Paste the whole file. It adds `tournaments`, `tournament_entries`, `tournament_player_locks`, and `meets.tournament_id` / `round` / `bracket_slot`. It replaces `private.side_score`, `private.find_live_meet`, `post_swing`, `meet_payload`, `scoreboard_payload`, `touch_meet_statuses`, and `clan_totals` so a round is still an ordinary meet. Do not run it twice. Do not run it before the earlier three files on a fresh database.
 
 ## How do I make a team / challenge someone?
 
@@ -85,8 +93,9 @@ contact now tapers across it, so a squared-up ball is usually off the wall.
 a physics nerf.
 
 ```bash
-npm run verify        # all three checks
-npm run verify:hr-rate  # just the difficulty regression
+npm run verify            # meet park, slice 2, HR rate, brackets
+npm run verify:hr-rate    # just the difficulty regression
+npm run verify:tournament # bracket rules in PGlite
 ```
 
 ## Locked rules (this PR)
@@ -101,6 +110,7 @@ npm run verify:hr-rate  # just the difficulty regression
 - Roster listing is decided by membership, not by who listed first (see migration 20260917200000).
 - Physics in the HTML prototype is unchanged (`k = 0.00116`).
 - **Neutral park is forced in the play iframe.** `create_meet` still writes `park_seed = neutral-v1`. `/play` reads the live meet from `scoreboard_payload` (same row as the ticker) and loads `/foul-pole-league.html?park_seed=…`, then `postMessage`s `set_park` so the game rebuilds that seed before a swing. Club zip parks cannot replace it while the meet is live. `post_swing` credits a meet only when the reported `p_park_seed` already matches `meet.park_seed` — it no longer relabels zip-porch feet after the fact.
+- **Brackets** are eight clubs. Local means one town. National means any eight. A club can be in one scheduled or live bracket. The captain of one of the eight posts it, free. Seeds are that level's clan board, oldest club breaks a tie. Quarterfinals are 1v8, 4v5, 2v7, 3v6. The server opens the next round when the round's meets go final. Winner is the higher top-9 total, then the higher best swing, then the higher seed. A side with no scoring swings loses. A player scores for one club per bracket: the club they were in when the quarterfinal window opened. The ticker and share card prefix `QF` / `SF` / `F`. Clan boards show a titles count from `champion_clan_id`.
 
 ## QA: meet park
 

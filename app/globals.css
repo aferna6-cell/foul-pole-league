@@ -82,6 +82,8 @@ h1.title em { font-style: normal; color: var(--pole); display: block; }
 .board-table th { text-align: left; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 600; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .board-table td { padding: 8px 0; border-bottom: 1px solid rgba(247,242,229,.08); }
 .board-table td.n { text-align: right; font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 18px; color: var(--pole); }
+.board-table th.titles, .board-table td.titles { text-align: right; }
+.board-table td.titles { font-family: "Barlow Condensed", sans-serif; font-weight: 700; color: var(--dim); font-size: 18px; }
 .board-table tr.me td { color: var(--pole); }
 .empty-note { color: var(--dim); font-size: 13px; }
 
@@ -203,3 +205,44 @@ input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
   line-height: 1.45; resize: vertical; min-height: 88px;
 }
 .play-top .ghost { flex: none; }
+
+/* ---- §11 brackets ---- */
+.fixture-banner {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--pole);
+  padding: 10px 12px;
+  color: var(--dim);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+.bracket-tabs { display: flex; gap: 8px; margin: 0 0 12px; }
+.bracket-tabs button { flex: 1; text-align: center; }
+.bracket-tabs button[aria-pressed="true"] {
+  background: var(--pole); color: #16202b; border-color: var(--pole);
+}
+.bracket-card { margin-top: 8px; }
+.bracket-card + .bracket-card { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.bracket-head h3 {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: 22px; margin: 0 8px 8px 0; display: inline-block;
+}
+.bracket-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 0.85fr;
+  gap: 12px;
+  align-items: start;
+}
+.bracket-meet {
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--pole);
+  padding: 8px;
+  margin-bottom: 8px;
+  background: rgba(7, 16, 27, 0.35);
+}
+.bracket-meet .ticker { margin: 0 0 6px; padding: 8px 10px; font-size: 16px; }
+.bracket-meet .actions { margin-top: 8px; }
+.bracket-meet .actions button, .bracket-meet .actions a { flex: none; min-width: 0; }
+.clan-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 800px) {
+  .bracket-grid, .clan-picks { grid-template-columns: 1fr; }
+}

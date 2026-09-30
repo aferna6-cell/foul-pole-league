@@ -20,7 +20,15 @@ export type ShareMeetData = {
   window_end: string;
   home: { name: string; total_feet: number; slots: number };
   away: { name: string; total_feet: number; slots: number };
+  /** QF / SF / F when this meet is a bracket round. */
+  round_label?: string | null;
 };
+
+/** Same line the board ticker uses, plus the round prefix when the meet has one. */
+export function meetTickerLine(data: ShareMeetData): string {
+  const tag = data.round_label ? `${data.round_label} ` : "";
+  return `${tag}${data.home.name} ${formatFeet(data.home.total_feet)} ft (${data.home.slots}/9) vs ${data.away.name} ${formatFeet(data.away.total_feet)} ft (${data.away.slots}/9)`;
+}
 
 /** Pull the same fields the live ticker already has — no second scoring path. */
 export function shareDataFromMeet(meet: MeetPayload): ShareMeetData {
@@ -28,6 +36,7 @@ export function shareDataFromMeet(meet: MeetPayload): ShareMeetData {
     id: meet.id,
     status: meet.status,
     window_end: meet.window_end,
+    round_label: meet.round_label ?? null,
     home: {
       name: meet.home.name,
       total_feet: meet.home.total_feet,
@@ -61,7 +70,7 @@ export function meetWinnerName(data: ShareMeetData): string | null {
  */
 export function shareBlurb(data: ShareMeetData, url?: string): string {
   const link = url ?? meetDeepLink(data.id);
-  const head = `${data.home.name} ${formatFeet(data.home.total_feet)} ft (${data.home.slots}/9) vs ${data.away.name} ${formatFeet(data.away.total_feet)} ft (${data.away.slots}/9)`;
+  const head = meetTickerLine(data);
   if (data.status === "final") {
     const winner = meetWinnerName(data);
     const tail = winner ? `FINAL. ${winner} wins.` : "FINAL. Tie.";

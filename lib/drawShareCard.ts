@@ -2,6 +2,7 @@ import { formatFeet } from "./format";
 import {
   byDeadline,
   meetDeepLink,
+  meetTickerLine,
   meetWinnerName,
   type ShareMeetData,
 } from "./shareCard";
@@ -113,7 +114,7 @@ export function drawMeetShareCard(
   }
   ctx.fillStyle = TOKENS.chalk;
   ctx.font = "800 32px 'Barlow Condensed', Archivo, sans-serif";
-  const ticker = `${data.home.name} ${formatFeet(data.home.total_feet)} ft (${data.home.slots}/9) vs ${data.away.name} ${formatFeet(data.away.total_feet)} ft (${data.away.slots}/9)`;
+  const ticker = meetTickerLine(data);
   y = wrapText(ctx, ticker, innerX, y, innerW, 38) + 20;
 
   ctx.fillStyle = TOKENS.line;
