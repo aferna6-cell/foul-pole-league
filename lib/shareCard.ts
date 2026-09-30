@@ -46,6 +46,34 @@ export function byDeadline(windowEnd: string): string {
   return `by ${deadlineCopy(windowEnd)}`;
 }
 
+/** Clipboard API present and allowed to write. False on insecure origins. */
+export function canUseClipboard(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    typeof navigator.clipboard?.writeText === "function" &&
+    (typeof window === "undefined" || window.isSecureContext)
+  );
+}
+
+type BlurbField = {
+  focus: () => void;
+  select: () => void;
+  value: string;
+  setSelectionRange: (start: number, end: number) => void;
+};
+
+/** Select the whole fallback blurb so one tap or long-press copies it. */
+export function selectBlurbText(el: BlurbField | null): void {
+  if (!el) return;
+  el.focus();
+  el.select();
+  try {
+    el.setSelectionRange(0, el.value.length);
+  } catch {
+    // readOnly fields on some browsers reject a range; select() already ran.
+  }
+}
+
 export function meetWinnerName(data: ShareMeetData): string | null {
   if (data.status !== "final") return null;
   if (data.home.total_feet === data.away.total_feet) return null;

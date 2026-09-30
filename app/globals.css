@@ -203,3 +203,37 @@ input[readonly] { color: var(--dim); background: rgba(7,16,27,.4); }
   line-height: 1.45; resize: vertical; min-height: 88px;
 }
 .play-top .ghost { flex: none; }
+
+/* ?meet= scheduled/final — swings are not taken against that meet. */
+.play-notice {
+  position: fixed;
+  top: calc(52px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 6px max(12px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left));
+  background: #123049;
+  border-bottom: 1px solid var(--line);
+  color: var(--chalk);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.play-notice .btn {
+  flex: none;
+  width: auto;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  background: transparent;
+}
+.play-frame.has-notice {
+  top: calc(52px + 64px + env(safe-area-inset-top));
+  height: calc(100dvh - 52px - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}

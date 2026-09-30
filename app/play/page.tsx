@@ -8,7 +8,8 @@ import { getPlayerId } from "@/lib/player";
 import { getSupabaseBrowser, supabaseConfigured } from "@/lib/supabase";
 import { rpcMessage } from "@/lib/format";
 import { gameIframeSrc } from "@/lib/meetPark";
-import type { MeetPayload, ScoreboardPayload } from "@/lib/types";
+import { resolvePlayTarget, scoringParkSeed } from "@/lib/playMeet";
+import type { MeetPayload, PlayerPayload, ScoreboardPayload } from "@/lib/types";
 
 type SwingMsg = {
   source?: string;
@@ -19,21 +20,13 @@ type SwingMsg = {
   park_seed?: string;
 };
 
-function pickMeet(meets: MeetPayload[], meetId: string | null): MeetPayload | undefined {
-  if (meetId) {
-    const hit = meets.find((m) => m.id === meetId);
-    if (hit) return hit;
-  }
-  return meets.find((m) => m.status === "live");
-}
-
 function PlayPage() {
   const configured = supabaseConfigured();
   const searchParams = useSearchParams();
   const deepMeetId = searchParams.get("meet");
-  const [ticker, setTicker] = useState("Take a swing — no login.");
-  const [activeMeet, setActiveMeet] = useState<MeetPayload | null>(null);
-  const [meetParkSeed, setMeetParkSeed] = useState<string | null>(null);
+  const [meets, setMeets] = useState<MeetPayload[]>([]);
+  const [player, setPlayer] = useState<PlayerPayload | null>(null);
+  const [myMeetIds, setMyMeetIds] = useState<string[]>([]);
   const [boardReady, setBoardReady] = useState(!configured);
   const [promptHomer, setPromptHomer] = useState(false);
   const [name, setName] = useState("");
@@ -54,23 +47,15 @@ function PlayPage() {
       return;
     }
     const payload = data as ScoreboardPayload;
-    const meet = pickMeet(payload.meets, deepMeetId);
-    if (meet) {
-      setTicker(meet.ticker);
-      setActiveMeet(meet);
-      // Only force neutral park while the selected meet is live.
-      setMeetParkSeed(meet.status === "live" ? meet.park_seed?.trim() || null : null);
-    } else {
-      setTicker("Take a swing — no login.");
-      setActiveMeet(null);
-      setMeetParkSeed(null);
-    }
+    setMeets(payload.meets ?? []);
+    setPlayer(payload.player ?? null);
+    setMyMeetIds(payload.my_meet_ids ?? []);
     setBoardReady(true);
     if (payload.player?.display_name) {
       setHasName(true);
       setName(payload.player.display_name);
     }
-  }, [configured, deepMeetId]);
+  }, [configured]);
 
   useEffect(() => {
     void load();
@@ -114,6 +99,13 @@ function PlayPage() {
     return () => window.removeEventListener("message", onMsg);
   }, [configured, hasName, load]);
 
+  const target = useMemo(
+    () => resolvePlayTarget(meets, deepMeetId, player, myMeetIds),
+    [meets, deepMeetId, player, myMeetIds]
+  );
+  const activeMeet = target.scoringMeet;
+  const meetParkSeed = scoringParkSeed(activeMeet);
+  const ticker = activeMeet?.ticker ?? "Take a swing — no login.";
   const iframeSrc = useMemo(() => gameIframeSrc(meetParkSeed), [meetParkSeed]);
 
   const pushParkToFrame = useCallback(() => {
@@ -138,7 +130,7 @@ function PlayPage() {
         <Link href="/" className="btn ghost" style={{ width: "auto", padding: "8px 10px" }}>
           Board
         </Link>
-        <div className="ticker live">{ticker}</div>
+        <div className={activeMeet?.status === "live" ? "ticker live" : "ticker"}>{ticker}</div>
         {activeMeet && activeMeet.status === "live" ? (
           <ShareMeet meet={activeMeet} compact />
         ) : null}
@@ -150,10 +142,20 @@ function PlayPage() {
           <span className="pill">zip park</span>
         ) : null}
       </div>
+      {target.notice ? (
+        <div className="play-notice" role="status">
+          <span>{target.notice.text}</span>
+          {target.notice.liveMeetId ? (
+            <Link className="btn ghost" href={`/play?meet=${target.notice.liveMeetId}`}>
+              Go to live meet
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
       {boardReady ? (
         <iframe
           ref={frameRef}
-          className="play-frame"
+          className={target.notice ? "play-frame has-notice" : "play-frame"}
           title="Foul Pole League"
           src={iframeSrc}
           allow="autoplay"
