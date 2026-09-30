@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { renderShareCardPng } from "@/lib/drawShareCard";
 import {
+  canUseClipboard,
   meetDeepLink,
+  selectBlurbText,
   shareBlurb,
   shareDataFromMeet,
 } from "@/lib/shareCard";
@@ -23,15 +25,23 @@ export default function ShareMeet({ meet, compact, className }: Props) {
   const [copied, setCopied] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [clipboardFallback, setClipboardFallback] = useState(false);
+  const blurbRef = useRef<HTMLTextAreaElement>(null);
 
   const url = meetDeepLink(data.id);
   const blurb = shareBlurb(data, url);
+
+  useEffect(() => {
+    if (!open || !clipboardFallback) return;
+    selectBlurbText(blurbRef.current);
+  }, [open, clipboardFallback, blurb]);
 
   const openSheet = useCallback(async () => {
     setOpen(true);
     setErr(null);
     setBusy(true);
     setCopied(false);
+    setClipboardFallback(!canUseClipboard());
     try {
       const blob = await renderShareCardPng(data, { url });
       const obj = URL.createObjectURL(blob);
@@ -48,11 +58,15 @@ export default function ShareMeet({ meet, compact, className }: Props) {
 
   const copyBlurb = useCallback(async () => {
     try {
+      if (!canUseClipboard()) throw new Error("clipboard unavailable");
       await navigator.clipboard.writeText(blurb);
       setCopied(true);
+      setClipboardFallback(false);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setErr("Clipboard blocked — select the blurb and copy.");
+      setClipboardFallback(true);
+      setErr("Clipboard blocked — the blurb is selected. Long-press or tap Copy.");
+      selectBlurbText(blurbRef.current);
     }
   }, [blurb]);
 
@@ -107,10 +121,12 @@ export default function ShareMeet({ meet, compact, className }: Props) {
             <label htmlFor="share-blurb">Clipboard blurb</label>
             <textarea
               id="share-blurb"
+              ref={blurbRef}
               className="share-blurb"
               readOnly
               rows={4}
               value={blurb}
+              data-clipboard-fallback={clipboardFallback ? "true" : "false"}
             />
             {err ? <p className="err">{err}</p> : null}
             {copied ? <p className="ok">Copied.</p> : null}
